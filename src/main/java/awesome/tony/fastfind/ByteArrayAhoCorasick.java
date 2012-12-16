@@ -33,6 +33,13 @@ public class ByteArrayAhoCorasick {
 		}
 	}
 
+	class SearchNugget{
+		private SearchNugget(Node node) {
+			this.current = node;
+		}
+		private Node current;
+	}
+	
 	final Node root = new Node();
 
 	public void addMatch(byte [] match){
@@ -82,8 +89,25 @@ public class ByteArrayAhoCorasick {
 
 	}
 
-	private void evaluate(byte[] bytes) {
+	
+	public void evaluate(byte [] bytes){
+		evaluate(bytes, null);
+	}
+	
+	public SearchNugget startMultiCallSearch(){
+		return new SearchNugget(root);
+	}
+	
+	public void evaluate(SearchNugget nugget, byte[] bytes){
+		evaluate(bytes, nugget);
+	}
+	
+	private void evaluate(byte[] bytes, SearchNugget nugget) {
 		Node current = root;
+		if(nugget != null){
+			current = nugget.current;
+			if(current == null) throw new IllegalArgumentException("bad search nugget");
+		}
 		int index = 0;
 		while (index < bytes.length) { 
 			int currentChar = ((int)bytes[index++]) & 0xff; 
@@ -110,6 +134,9 @@ public class ByteArrayAhoCorasick {
 			}
 			current = next; 
 		} 
+		if(nugget != null){
+			nugget.current = current;
+		}
 	}
 
 	public static void main(String args[]){
@@ -121,7 +148,10 @@ public class ByteArrayAhoCorasick {
 		b.addMatch("burden".getBytes());
 		b.addMatch("over".getBytes());
 		b.finalize();
-		b.evaluate("the brown foo fox something something bufoox".getBytes());
+		SearchNugget n = b.startMultiCallSearch();
+		
+		b.evaluate("the brown foo fox something something bufo".getBytes(), n);
+		b.evaluate("ox".getBytes(), n);
 	}
 
 }
