@@ -4,32 +4,31 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class ByteArrayAhoCorasick {
-	public static class Node{
+	private static class Node{
 		final private Node neighbors[] = new Node[256];
 		private Node failure = null;
 		private byte[] match = null;
 
-		public Node(byte[] match) {
+		private Node(byte[] match) {
 			this.matches = true;
 			this.match = match; 
 		}
-		public Node() {
+		private Node() {
 			this.matches = false;
 		}
 		boolean matches = false;
-		public void setFail(Node fail) {
+		private void setFail(Node fail) {
 			this.failure = fail;
 		}
-		public Node getFail() {
+		private Node getFail() {
 			return failure;
 		}
-		public boolean isMatch(){
+		private boolean isMatch(){
 			return matches;
 		}
-		public void setMatch(byte[] match) {
+		private void setMatch(byte[] match) {
 			matches = true;
 			this.match = match;
-			
 		}
 	}
 
