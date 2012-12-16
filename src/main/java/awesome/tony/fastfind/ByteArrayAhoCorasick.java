@@ -91,18 +91,26 @@ public class ByteArrayAhoCorasick {
 	}
 
 	public void evaluate(byte [] bytes){
-		evaluate(bytes, null);
+		evaluate(bytes, null, MatchCallbacks.SYSTEMOUT);
 	}
 	
 	public SearchNugget startMultiCallSearch(){
 		return new SearchNugget(root);
 	}
 	
-	public void evaluate(SearchNugget nugget, byte[] bytes){
-		evaluate(bytes, nugget);
+	public void evaluate(byte[] bytes, SearchNugget nugget){
+		evaluate(bytes, nugget, MatchCallbacks.SYSTEMOUT);
 	}
 	
-	private void evaluate(byte[] bytes, SearchNugget nugget) {
+	public static enum MatchCallbacks implements FindCallback{
+		SYSTEMOUT;
+		@Override
+		public void findCallback(int offsetInCurrentBuffer, byte[] termMatch) {
+			System.out.println("match at: " + offsetInCurrentBuffer + " ["  + new String(termMatch) + "]");
+		}
+	};
+	
+	private void evaluate(byte[] bytes, SearchNugget nugget, FindCallback f) {
 		Node current = root;
 		if(nugget != null){
 			current = nugget.current;
@@ -125,14 +133,16 @@ public class ByteArrayAhoCorasick {
 				} 
 			} 
 			// Accept condition
-			// TODO: need a means of returning matches. Callback function?
-
+			// TODO: need a means of passing back an object I don't care about
 			if(next.isMatch()){
-				System.out.println("match: " + new String(next.match));
+				byte [] rv = new byte[next.match.length];
+				System.arraycopy(next.match, 0, rv, 0, next.match.length);
+				f.findCallback(index, rv);
 			}
 			if(next.failure != null && next.failure.isMatch()){
-				System.out.println("match: " + new String(next.failure.match));
-
+				byte [] rv = new byte[next.failure.match.length];
+				System.arraycopy(next.failure.match, 0, rv, 0, next.failure.match.length);
+				f.findCallback(index, rv);
 			}
 			current = next; 
 		} 
@@ -150,6 +160,7 @@ public class ByteArrayAhoCorasick {
 		b.addMatch("burden".getBytes());
 		b.addMatch("over".getBytes());
 		b.finalize();
+	
 		SearchNugget n = b.startMultiCallSearch();
 		
 		b.evaluate("the brown foo fox something something bufo".getBytes(), n);
