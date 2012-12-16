@@ -1,5 +1,6 @@
 package awesome.tony.fastfind;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -13,7 +14,7 @@ public class ByteArrayAhoCorasick {
 
 		private Node(byte[] match) {
 			this.matches = true;
-			this.match = match; 
+			this.match = Arrays.copyOf(match, match.length);
 		}
 		private Node() {
 			this.matches = false;
@@ -29,10 +30,11 @@ public class ByteArrayAhoCorasick {
 		}
 		private void setMatch(byte[] match) {
 			matches = true;
-			this.match = match;
+			this.match = Arrays.copyOf(match, match.length);
 		}
+		
 	}
-
+	
 	public class SearchNugget{
 		private SearchNugget(Node node) {
 			this.current = node;
@@ -133,16 +135,17 @@ public class ByteArrayAhoCorasick {
 				} 
 			} 
 			// Accept condition
-			// TODO: need a means of passing back an object I don't care about
+			// TODO: need a better means of passing back an object I don't care about
 			if(next.isMatch()){
 				byte [] rv = new byte[next.match.length];
 				System.arraycopy(next.match, 0, rv, 0, next.match.length);
 				f.findCallback(index, rv);
 			}
-			if(next.failure != null && next.failure.isMatch()){
-				byte [] rv = new byte[next.failure.match.length];
-				System.arraycopy(next.failure.match, 0, rv, 0, next.failure.match.length);
-				f.findCallback(index, rv);
+			// TODO: Can fix this with state in the node (
+			for(Node s = next.failure; s != null; s = s.failure){
+				if(s.isMatch()){
+					f.findCallback(index, Arrays.copyOf(s.match, s.match.length));
+				}
 			}
 			current = next; 
 		} 
@@ -154,17 +157,15 @@ public class ByteArrayAhoCorasick {
 	public static void main(String args[]){
 		ByteArrayAhoCorasick b = new ByteArrayAhoCorasick();
 		b.addMatch("foo".getBytes());
-		b.addMatch("bar".getBytes());
-		b.addMatch("baz".getBytes());
-		b.addMatch("bufoon".getBytes());
-		b.addMatch("burden".getBytes());
-		b.addMatch("over".getBytes());
+		b.addMatch("oo".getBytes());
+		b.addMatch("bufoo".getBytes());
+		b.addMatch("oodle".getBytes());
 		b.finalize();
 	
 		SearchNugget n = b.startMultiCallSearch();
 		
 		b.evaluate("the brown foo fox something something bufo".getBytes(), n);
-		b.evaluate("ox".getBytes(), n);
+		b.evaluate("odle".getBytes(), n);
 	}
 
 }
