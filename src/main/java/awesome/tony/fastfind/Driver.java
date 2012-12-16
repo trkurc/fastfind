@@ -5,8 +5,9 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
+import java.nio.ByteBuffer;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import awesome.tony.fastfind.ByteArrayAhoCorasick.SearchNugget;
 
@@ -14,7 +15,7 @@ public class Driver {
 
 	static class TallyingCallback implements FindCallback{
 		int bytesRead = 0;
-		HashMap<String, Integer> m = new HashMap<String, Integer>();
+		TreeMap<String, Integer> m = new TreeMap<String, Integer>();
 		
 		@Override
 		public void findCallback(int offsetInCurrentBuffer, byte[] termMatch) {
@@ -28,6 +29,7 @@ public class Driver {
 				newCount = count + 1;
 			}
 			m.put(match, newCount);
+			//System.out.printf("found %s at %x\n", match, bytesRead + offsetInCurrentBuffer);
 		}
 
 		public void updateBytesRead(int bytesRead) {
@@ -56,10 +58,13 @@ public class Driver {
 			TallyingCallback t = new TallyingCallback();
 			SearchNugget n = bac.startMultiCallSearch();
 			InputStream match = new BufferedInputStream(new FileInputStream(args[1]));
-			byte buffer[] = new byte[4<<10];
+			byte buffer[] = new byte[43377];
 			int bytesRead;
+			ByteBuffer bb = ByteBuffer.wrap(buffer);
 			while((bytesRead = match.read(buffer)) != -1){
-				bac.evaluate(buffer, 0, bytesRead, n, t);
+				bb.limit(bytesRead);
+				bb.position(0);
+				bac.evaluate(bb, n, t);
 				t.updateBytesRead(bytesRead);
 			}
 			match.close();

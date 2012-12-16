@@ -46,6 +46,7 @@ public class ByteArrayAhoCorasick {
 	final Node root = new Node();
 
 	public void addMatch(byte [] match){
+		if(match.length < 1) return;
 		addMatchRecursive(match, 0, root);
 	}
 	private void addMatchRecursive(byte match[], int offset, Node current){
@@ -121,7 +122,7 @@ public class ByteArrayAhoCorasick {
 		}
 	};
 
-	private void evaluate(ByteBuffer bytes, SearchNugget nugget, FindCallback f) {
+	void evaluate(ByteBuffer bytes, SearchNugget nugget, FindCallback f) {
 		Node current = root;
 		if(nugget != null){
 			current = nugget.current;
@@ -146,7 +147,6 @@ public class ByteArrayAhoCorasick {
 			// Accept condition
 			// TODO: need a better means of passing back an object I don't care about
 			if(next.isMatch()){
-
 				f.findCallback(bytes.position(), Arrays.copyOf(next.match, next.match.length));
 			}
 			// TODO: Can fix this with state in the node (
