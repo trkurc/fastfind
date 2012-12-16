@@ -88,7 +88,6 @@ public class ByteArrayAhoCorasick {
 		while (index < bytes.length) { 
 			int currentChar = ((int)bytes[index++]) & 0xff; 
 			Node next = current.neighbors[currentChar]; 
-			System.out.println("["+ (char)currentChar +"]");
 			if (next == null) { 
 				next = current.getFail();
 				while ((next != null) && next.neighbors[currentChar] == null) { 
