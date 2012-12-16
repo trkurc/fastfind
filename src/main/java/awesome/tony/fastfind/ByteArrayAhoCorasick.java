@@ -6,8 +6,10 @@ import java.util.Queue;
 public class ByteArrayAhoCorasick {
 	private static class Node{
 		final private Node neighbors[] = new Node[256];
+		// invariant - if matches == false, match is null, TODO: tidy up
 		private Node failure = null;
 		private byte[] match = null;
+		boolean matches = false;
 
 		private Node(byte[] match) {
 			this.matches = true;
@@ -16,7 +18,6 @@ public class ByteArrayAhoCorasick {
 		private Node() {
 			this.matches = false;
 		}
-		boolean matches = false;
 		private void setFail(Node fail) {
 			this.failure = fail;
 		}
@@ -32,7 +33,7 @@ public class ByteArrayAhoCorasick {
 		}
 	}
 
-	class SearchNugget{
+	public class SearchNugget{
 		private SearchNugget(Node node) {
 			this.current = node;
 		}
@@ -47,6 +48,7 @@ public class ByteArrayAhoCorasick {
 	private void addMatchRecursive(byte match[], int offset, Node current){
 		int index = ((int)match[offset])&(0xff);
 		boolean atEnd = (offset == (match.length - 1));
+		// TODO: a bit untidy
 		if(current.neighbors[index] == null){
 			if(atEnd == true){
 				current.neighbors[index] = new Node(match);
@@ -62,7 +64,7 @@ public class ByteArrayAhoCorasick {
 	}
 
 	public void finalize(){
-		// perform bfs to build links
+		// perform bfs to build failure links
 		Queue<Node> queue = new LinkedList<Node>();
 		queue.add(root);
 		root.setFail(null);
@@ -88,7 +90,6 @@ public class ByteArrayAhoCorasick {
 
 	}
 
-	
 	public void evaluate(byte [] bytes){
 		evaluate(bytes, null);
 	}
@@ -124,6 +125,8 @@ public class ByteArrayAhoCorasick {
 				} 
 			} 
 			// Accept condition
+			// TODO: need a means of returning matches. Callback function?
+
 			if(next.isMatch()){
 				System.out.println("match: " + new String(next.match));
 			}
