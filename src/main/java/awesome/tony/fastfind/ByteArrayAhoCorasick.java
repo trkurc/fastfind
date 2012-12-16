@@ -1,5 +1,6 @@
 package awesome.tony.fastfind;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -32,16 +33,16 @@ public class ByteArrayAhoCorasick {
 			matches = true;
 			this.match = Arrays.copyOf(match, match.length);
 		}
-		
+
 	}
-	
+
 	public class SearchNugget{
 		private SearchNugget(Node node) {
 			this.current = node;
 		}
 		private Node current;
 	}
-	
+
 	final Node root = new Node();
 
 	public void addMatch(byte [] match){
@@ -93,15 +94,23 @@ public class ByteArrayAhoCorasick {
 	}
 
 	public void evaluate(byte [] bytes){
-		evaluate(bytes, null, MatchCallbacks.SYSTEMOUT);
+		evaluate(ByteBuffer.wrap(bytes), null, MatchCallbacks.SYSTEMOUT);
 	}
-	
+
 	public SearchNugget startMultiCallSearch(){
 		return new SearchNugget(root);
 	}
-	
+
 	public void evaluate(byte[] bytes, SearchNugget nugget){
-		evaluate(bytes, nugget, MatchCallbacks.SYSTEMOUT);
+		evaluate(ByteBuffer.wrap(bytes), nugget, MatchCallbacks.SYSTEMOUT);
+	}
+	
+	public void evaluate(byte[] bytes, int offset, int limit, SearchNugget nugget){
+		evaluate(bytes, offset, limit, nugget, MatchCallbacks.SYSTEMOUT);
+	}
+	
+	public void evaluate(byte[] bytes, int offset, int limit, SearchNugget nugget, FindCallback f){
+		evaluate(ByteBuffer.wrap(bytes, offset, limit), nugget, f);
 	}
 	
 	public static enum MatchCallbacks implements FindCallback{
@@ -111,16 +120,16 @@ public class ByteArrayAhoCorasick {
 			System.out.println("match at: " + offsetInCurrentBuffer + " ["  + new String(termMatch) + "]");
 		}
 	};
-	
-	private void evaluate(byte[] bytes, SearchNugget nugget, FindCallback f) {
+
+	private void evaluate(ByteBuffer bytes, SearchNugget nugget, FindCallback f) {
 		Node current = root;
 		if(nugget != null){
 			current = nugget.current;
 			if(current == null) throw new IllegalArgumentException("bad search nugget");
 		}
-		int index = 0;
-		while (index < bytes.length) { 
-			int currentChar = ((int)bytes[index++]) & 0xff; 
+
+		while (bytes.position() < bytes.limit()) { 
+			int currentChar = bytes.get() & 0xff; 
 			Node next = current.neighbors[currentChar]; 
 			if (next == null) { 
 				next = current.getFail();
@@ -137,14 +146,13 @@ public class ByteArrayAhoCorasick {
 			// Accept condition
 			// TODO: need a better means of passing back an object I don't care about
 			if(next.isMatch()){
-				byte [] rv = new byte[next.match.length];
-				System.arraycopy(next.match, 0, rv, 0, next.match.length);
-				f.findCallback(index, rv);
+
+				f.findCallback(bytes.position(), Arrays.copyOf(next.match, next.match.length));
 			}
 			// TODO: Can fix this with state in the node (
 			for(Node s = next.failure; s != null; s = s.failure){
 				if(s.isMatch()){
-					f.findCallback(index, Arrays.copyOf(s.match, s.match.length));
+					f.findCallback(bytes.position(), Arrays.copyOf(s.match, s.match.length));
 				}
 			}
 			current = next; 
@@ -152,20 +160,6 @@ public class ByteArrayAhoCorasick {
 		if(nugget != null){
 			nugget.current = current;
 		}
-	}
-
-	public static void main(String args[]){
-		ByteArrayAhoCorasick b = new ByteArrayAhoCorasick();
-		b.addMatch("foo".getBytes());
-		b.addMatch("oo".getBytes());
-		b.addMatch("bufoo".getBytes());
-		b.addMatch("oodle".getBytes());
-		b.finalize();
-	
-		SearchNugget n = b.startMultiCallSearch();
-		
-		b.evaluate("the brown foo fox something something bufo".getBytes(), n);
-		b.evaluate("odle".getBytes(), n);
 	}
 
 }
