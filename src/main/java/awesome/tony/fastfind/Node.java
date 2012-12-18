@@ -1,50 +1,61 @@
 package awesome.tony.fastfind;
 
-import java.util.Arrays;
-
 /**
- *
+ * Node representing the essential element of the modified Trie used
+ * for Aho Corasick data structure
  * @author
  */
 public class Node {
 
     private final Node[] neighbors;
     private Node failureNode;
-    private byte[] match;
+    private SearchTerm term;
 
-    Node(byte[] match) {
+    Node(final SearchTerm term) {
         this.neighbors = new Node[256];
-        this.match = Arrays.copyOf(match, match.length);
+        this.term = term;
     }
 
     Node() {
         neighbors = new Node[256];
-        match = null;
+        term = null;
     }
 
     void setFailureNode(final Node fail) {
         this.failureNode = fail;
     }
 
+    /**
+     * @return the node from which this node is related for failure cases 
+     * (represents the longest valid subsequence from which this search term stems
+     */
     public Node getFailureNode() {
         return failureNode;
     }
 
-    public boolean hasMatch() {
-        return match != null;
+    /**
+     * @return true if this node indicates a successfully matched search term; false otherwise
+     */
+    public boolean isMatchingNode() {
+        return term != null;
     }
 
-    void setMatchValue(final byte[] match) {
-        this.match = Arrays.copyOf(match, match.length);
+    void setSearchTerm(final SearchTerm term) {
+        this.term = term;
     }
     
-    public byte[] getMatch() {
-        if(match == null){
-            return null;
-        }
-        return Arrays.copyOf(match, match.length);
+    /**
+     * @return the term for which this node is relevant.
+     */
+    public SearchTerm getSearchTerm() {
+        return term;
     }
     
+    /**
+     * @param index
+     * @return the neighbor node for the given index
+     * @throws IndexOutOfBoundsException
+     */
     public Node getNeighbor(final int index){
         return neighbors[index]; 
     }

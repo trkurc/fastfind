@@ -3,6 +3,7 @@ package awesome.tony.fastfind;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import static org.junit.Assert.*;
@@ -14,18 +15,24 @@ public class TestAhoCorasick {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestAhoCorasick.class);
 
+    static List<SearchTerm> getSearchTerms(final List<String> terms) {
+        final List<SearchTerm> searchTerms = new ArrayList<>(terms.size());
+        for (final String term : terms) {
+            searchTerms.add(new SearchTerm(term.getBytes()));
+        }
+        return searchTerms;
+    }
+
     @Test
     public void testOneMatch() {
         final String text = "this is a pretty stupid text string";
-        final List<byte[]> phrases = new ArrayList<>(5);
-        phrases.add("stupid".getBytes());
+        final List<SearchTerm> phrases = getSearchTerms(Arrays.asList("stupid"));
         final AhoCorasick ac = new AhoCorasick(phrases);
         try {
-            ac.evaluate(new ByteArrayInputStream(text.getBytes()));
-            final Map<SearchPhrase, List<Long>> results = ac.getResults();
+            final Map<SearchTerm, List<Long>> results = ac.evaluate(new ByteArrayInputStream(text.getBytes()), true);
             assertEquals(1, results.size());
-            final Map.Entry<SearchPhrase, List<Long>> result = results.entrySet().iterator().next();
-            assertEquals("stupid", new String(result.getKey().getPhrase()));
+            final Map.Entry<SearchTerm, List<Long>> result = results.entrySet().iterator().next();
+            assertEquals(new SearchTerm("stupid".getBytes()), result.getKey());
             assertEquals(1, result.getValue().size());
             assertEquals(Long.valueOf(23L), result.getValue().get(0));
         } catch (final IOException ex) {
@@ -34,24 +41,16 @@ public class TestAhoCorasick {
     }
 
     @Test
-    public void testMultimatchSamePhrase() {
+    public void testMultimatchFindAll() {
         final String text = "this is a pretty stupid text string - this is a pretty stupid text string - this is a pretty stupid text string - thanks...ttt";
-        final List<byte[]> phrases = new ArrayList<>(5);
-        phrases.add("stupid".getBytes());
-        phrases.add("-".getBytes());
-        phrases.add("t".getBytes());
-        phrases.add("th".getBytes());
-        phrases.add("g - thi".getBytes());
-        phrases.add("tt".getBytes());
-        phrases.add("this string is not in here but is kinda long".getBytes());
+        final List<SearchTerm> phrases = getSearchTerms(Arrays.asList("stupid", "-", "t", "th", "g - thi", "tt", "this is a long string that won't match"));
         final AhoCorasick ac = new AhoCorasick(phrases);
         try {
-            ac.evaluate(new ByteArrayInputStream(text.getBytes()));
-            final Map<SearchPhrase, List<Long>> results = ac.getResults();
+            final Map<SearchTerm, List<Long>> results = ac.evaluate(new ByteArrayInputStream(text.getBytes()), true);
             assertEquals(6, results.size());
-            for (final Map.Entry<SearchPhrase, List<Long>> entry : results.entrySet()) {
-                final String phraseVal = new String(entry.getKey().getPhrase());
-                switch (phraseVal) {
+            for (final Map.Entry<SearchTerm, List<Long>> entry : results.entrySet()) {
+                final SearchTerm term = entry.getKey();
+                switch (term.toString()) {
                     case "stupid":
                         assertEquals(3, entry.getValue().size());
                         LOG.info("stupid matched at indexes {}", entry.getValue().toString());
@@ -83,5 +82,14 @@ public class TestAhoCorasick {
         } catch (final IOException ex) {
             fail(ex.toString());
         }
+    }
+
+    @Test
+    public void testMultimatchFindOne() throws IOException {
+        final String text = "this is a pretty stupid text string - this is a pretty stupid text string - this is a pretty stupid text string - thanks...ttt";
+        final List<SearchTerm> phrases = getSearchTerms(Arrays.asList("stupid", "-", "t", "th", "g - thi", "tt", "this is a long string that won't match"));
+        final AhoCorasick ac = new AhoCorasick(phrases);
+        final Map<SearchTerm, List<Long>> results = ac.evaluate(new ByteArrayInputStream(text.getBytes()), false);
+        assertEquals(1, results.size());
     }
 }

@@ -10,54 +10,52 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+ * Implementation of the Aho Corasick string search algorithm.  Given dictionary
+ * terms are evaluated against a given data stream to find matches.
+ * @author 
+ */
 public class AhoCorasick {
 
-    private final Node root;
-    private Node currentNode;
-    private final Map<SearchPhrase, List<Long>> resultMap;
-    private long bytesRead;
+    static void addResult(final Map<SearchTerm, List<Long>> results, final long index, final SearchTerm term) {
+        final List<Long> indexes = (results.containsKey(term)) ? results.get(term) : new ArrayList<Long>(5);
+        indexes.add(index);
+        results.put(term, indexes);
+    }
 
-    public AhoCorasick(final Collection<byte[]> searchPhrases) {
-        if (searchPhrases.isEmpty()) {
+    private final Node root;
+
+    /**
+     * Constructs an instance of the Aho Corasick search algorithm initialized
+     * with the given dictionary.
+     * @param dictionary 
+     * @throws IllegalArgumentException if given dictionary is null or empty
+     */
+    public AhoCorasick(final Collection<SearchTerm> dictionary) {
+        if (dictionary.isEmpty()) {
             throw new IllegalArgumentException();
         }
         root = new Node();
-        resultMap = new HashMap<>(searchPhrases.size());
-        currentNode = root;
-        bytesRead = 0L;
-        for (final byte[] phrase : searchPhrases) {
-            if (phrase.length == 0) {
-                continue;
-            }
-            addMatchRecursive(phrase, 0, root);
+        for (final SearchTerm term : dictionary) {
+            addMatchRecursive(term, 0, root);
         }
         initialize();
     }
 
-    public void reset() {
-        currentNode = root;
-        resultMap.clear();
-        bytesRead = 0L;
-    }
-    
-    public Map<SearchPhrase, List<Long>> getResults(){
-        return new HashMap<>(resultMap);
-    }
-
-    private void addMatchRecursive(byte match[], int offset, Node current) {
-        int index = ((int) match[offset]) & (0xff);
-        boolean atEnd = (offset == (match.length - 1));
+    private void addMatchRecursive(final SearchTerm term, final int offset, final Node current) {
+        final int index = term.get(offset);
+        final boolean atEnd = (offset == (term.size() - 1));
         if (current.getNeighbor(index) == null) {
-            if (atEnd == true) {
-                current.setNeighbor(new Node(match), index);
+            if (atEnd) {
+                current.setNeighbor(new Node(term), index);
                 return;
             }
             current.setNeighbor(new Node(), index);
-        } else if (atEnd == true) {
-            current.getNeighbor(index).setMatchValue(match);
+        } else if (atEnd) {
+            current.getNeighbor(index).setSearchTerm(term);
             return;
         }
-        addMatchRecursive(match, offset + 1, current.getNeighbor(index));
+        addMatchRecursive(term, offset + 1, current.getNeighbor(index));
     }
 
     private void initialize() {
@@ -87,9 +85,19 @@ public class AhoCorasick {
 
     }
 
-    public void evaluate(InputStream stream) throws IOException {
-        Node current = currentNode;
-
+    /**
+     * Searches through the given stream for matches against this objects already loaded
+     * dictionary.
+     * @param stream source stream to search for patterns in
+     * @param findAll determines if all possible patterns will be found (true) or if it will stop on first match (false)
+     * @return Map of search terms with each containing a list of long indexes which indicate which byte offset a search term was found at
+     * in the source stream
+     * @throws IOException 
+     */
+    public Map<SearchTerm, List<Long>> evaluate(final InputStream stream, final boolean findAll) throws IOException {
+        final Map<SearchTerm, List<Long>> resultMap = new HashMap<>(findAll ? 5 : 1);
+        long bytesRead = 0L;        
+        Node current = root;
         int currentChar;
         while ((currentChar = stream.read()) >= 0) {
             bytesRead++;
@@ -108,25 +116,19 @@ public class AhoCorasick {
             if (next == null) {
                 throw new IllegalStateException("this doesn't make sense to me yet...based on above assignment it seems it could be null yet null seems not legit");
             }
-            // Accept condition
-            if (next.hasMatch()) {
-                addResult(bytesRead, next.getMatch());
+            if (next.isMatchingNode()) {
+                addResult(resultMap, bytesRead, next.getSearchTerm());
             }
-            // TODO: Can fix this with state in the node (perhaps the Node class should provide a method to get the failure node chain
             for (Node failNode = next.getFailureNode(); failNode != null; failNode = failNode.getFailureNode()) {
-                if (failNode.hasMatch()) {
-                    addResult(bytesRead, failNode.getMatch());
+                if (failNode.isMatchingNode()) {
+                    addResult(resultMap, bytesRead, failNode.getSearchTerm());
                 }
             }
             current = next;
+            if(!findAll && resultMap.size() > 0){
+                break;//we've got enough
+            }
         }
-        currentNode = current;
-    }
-
-    private void addResult(final long index, final byte[] matchingPhrase) {
-        final SearchPhrase phrase = new SearchPhrase(matchingPhrase);
-        final List<Long> indexes = (resultMap.containsKey(phrase)) ? resultMap.get(phrase) : new ArrayList<Long>(5);
-        indexes.add(index);
-        resultMap.put(phrase, indexes);
+        return resultMap;
     }
 }
