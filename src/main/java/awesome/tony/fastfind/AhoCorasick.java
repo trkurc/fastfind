@@ -45,7 +45,6 @@ public class AhoCorasick {
 		}
 		root = FAST_NODE_FACTORY.getNode();
 		for (final SearchTerm term : dictionary) {
-			//addMatchRecursive(term, 0, root);
 			addMatchLoop(term, root);
 		}
 		initialize();
