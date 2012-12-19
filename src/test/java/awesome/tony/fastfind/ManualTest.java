@@ -1,16 +1,19 @@
 package awesome.tony.fastfind;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,14 +27,25 @@ public class ManualTest {
     private static final Charset UTF8 = Charset.forName("utf-8");
 
     public static void main(final String args[]) throws IOException {
-
-        //build up our dictionary of stuff to search for
-        final List<String> dictionaryStrings = Arrays.asList("蕘翁", "思", "a few minutes to settle, taking care", "смерть свою");
-        final List<SearchTerm> dictionary = new ArrayList<>(dictionaryStrings.size());
-        for (final String str : dictionaryStrings) {
-            dictionary.add(new SearchTerm(str.getBytes(UTF8)));
-        }
-
+        final List<SearchTerm> dictionary = new ArrayList<>();
+        BufferedReader reader = null;
+    	try {
+    		reader = new BufferedReader(new InputStreamReader((Thread.currentThread().getContextClassLoader().getResourceAsStream("longmatchlist.txt"))));
+    		String lineRead;
+    		while ((lineRead = reader.readLine()) != null) {
+    			if(lineRead.length() > 4)
+    				dictionary.add(new SearchTerm(lineRead.getBytes(UTF8)));
+    		}
+    	} finally {
+    		if (reader != null) {
+    			try {
+    				reader.close();
+    			} catch (final Throwable t) {
+    				//ignore
+    			}
+    		}
+    	}
+        
         //build up our content to search against
         final List<String> resources = Arrays.asList("GUTINDEX.ALL", "chinese.txt", "english.txt", "russian.txt", "us.jpg");
         final Map<String, byte[]> resourceMap = new HashMap<>(resources.size());
@@ -55,9 +69,9 @@ public class ManualTest {
                 }
             }
         }
-
+        final long pre = System.currentTimeMillis();
         final AhoCorasick ac = new AhoCorasick(dictionary);
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 1; i++) {
             for (Map.Entry<String, byte[]> entry : resourceMap.entrySet()) {
                 final Map<SearchTerm, List<Long>> result = ac.evaluate(new ByteArrayInputStream(entry.getValue()), true);
                 if (i % 10000 == 0) {
@@ -65,6 +79,8 @@ public class ManualTest {
                 }
             }
         }
+        final long post = System.currentTimeMillis();
+        LOG.info("executed in {}ms", (post - pre));
 
     }
 }
