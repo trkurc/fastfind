@@ -155,17 +155,17 @@ public class AhoCorasick {
 			if (next.isMatchingNode()) {
 				addResult(resultMap, bytesRead, next.getSearchTerm());
 			}
-			//Uncomment this out for fast fail
+			//comment this if out (and the matching })to disable fast fail (leave the for loop though)
 			if(next.hasMatchOnFailPath()){
-			for (Node failNode = next.getFailureNode(); failNode != null; failNode = failNode.getFailureNode()) {
-				if (failNode.isMatchingNode()) {
-					addResult(resultMap, bytesRead, failNode.getSearchTerm());
+				for (Node failNode = next.getFailureNode(); failNode != null; failNode = failNode.getFailureNode()) {
+					if (failNode.isMatchingNode()) {
+						addResult(resultMap, bytesRead, failNode.getSearchTerm());
+					}
+					// comment this if and block to disable fast fail
+					if(!failNode.hasMatchOnFailPath()){
+						break;
+					}
 				}
-				// Uncomment these out for fast fail
-				       if(!failNode.hasMatchOnFailPath()){
-				      	break;
-				     }
-			}
 
 			}
 			current = next;
