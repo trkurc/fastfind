@@ -17,6 +17,9 @@ import java.util.Queue;
  */
 public class AhoCorasick {
 
+	private static final int DEPTH_CUTOFF = 2;
+
+
 	static void addResult(final Map<SearchTerm, List<Long>> results, final long index, final SearchTerm term) {
 		final List<Long> indexes = (results.containsKey(term)) ? results.get(term) : new ArrayList<Long>(5);
 		indexes.add(index);
@@ -24,7 +27,9 @@ public class AhoCorasick {
 	}
 
 	private final Node root;
-	private static NodeFactory NODEFACTORY = new ReferenceArrayNodeFactory();
+	private static NodeFactory FAST_NODE_FACTORY = new ReferenceArrayNodeFactory();
+	private static NodeFactory SLOW_NODE_FACTORY = new HashNodeFactory();
+
 
 	/**
 	 * Constructs an instance of the Aho Corasick search algorithm initialized
@@ -36,27 +41,33 @@ public class AhoCorasick {
 		if (dictionary.isEmpty()) {
 			throw new IllegalArgumentException();
 		}
-		root = NODEFACTORY.getNode();
+		root = FAST_NODE_FACTORY.getNode();
 		for (final SearchTerm term : dictionary) {
-			addMatchRecursive(term, 0, root);
+			//addMatchRecursive(term, 0, root);
+			addMatchLoop(term, root);
 		}
 		initialize();
 	}
 
-	private void addMatchRecursive(final SearchTerm term, final int offset, final Node current) {
-		final int index = term.get(offset);
-		final boolean atEnd = (offset == (term.size() - 1));
-		if (current.getNeighbor(index) == null) {
-			if (atEnd) {
-				current.setNeighbor(NODEFACTORY.getNode(term), index);
+	private void addMatchLoop(final SearchTerm term, final Node root) {
+		Node current = root;
+		for(int depth = 0; depth < term.size() ; depth++){
+			final NodeFactory nf = (depth >= DEPTH_CUTOFF)?SLOW_NODE_FACTORY:FAST_NODE_FACTORY;
+
+			final int index = term.get(depth);
+			final boolean atEnd = (depth == (term.size()) - 1);
+			if (current.getNeighbor(index) == null) {
+				if (atEnd) {
+					current.setNeighbor(nf.getNode(term), index);
+					return;
+				}
+				current.setNeighbor(nf.getNode(), index);
+			} else if (atEnd) {
+				current.getNeighbor(index).setSearchTerm(term);
 				return;
 			}
-			current.setNeighbor(NODEFACTORY.getNode(), index);
-		} else if (atEnd) {
-			current.getNeighbor(index).setSearchTerm(term);
-			return;
+			current = current.getNeighbor(index);
 		}
-		addMatchRecursive(term, offset + 1, current.getNeighbor(index));
 	}
 
 	private void initialize() {
@@ -144,18 +155,18 @@ public class AhoCorasick {
 				addResult(resultMap, bytesRead, next.getSearchTerm());
 			}
 			//Uncomment this out for fast fail
-			//if(next.hasMatchOnFailPath()){
+			if(next.hasMatchOnFailPath()){
 			for (Node failNode = next.getFailureNode(); failNode != null; failNode = failNode.getFailureNode()) {
 				if (failNode.isMatchingNode()) {
 					addResult(resultMap, bytesRead, failNode.getSearchTerm());
 				}
 				// Uncomment these out for fast fail
-				//       if(!failNode.hasMatchOnFailPath()){
-				//      	break;
-				//     }
+				       if(!failNode.hasMatchOnFailPath()){
+				      	break;
+				     }
 			}
 
-			//}
+			}
 			current = next;
 			if(!findAll && resultMap.size() > 0){
 				break;//we've got enough
