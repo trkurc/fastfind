@@ -16,7 +16,9 @@ import java.util.Queue;
  * @author 
  */
 public class AhoCorasick {
-
+	
+	
+	// TODO: parameterize this
 	private static final int DEPTH_CUTOFF = 2;
 
 
