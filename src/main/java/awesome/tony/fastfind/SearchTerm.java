@@ -1,7 +1,5 @@
 package awesome.tony.fastfind;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Arrays;
 
 /**

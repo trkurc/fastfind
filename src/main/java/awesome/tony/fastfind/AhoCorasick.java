@@ -102,20 +102,27 @@ public class AhoCorasick {
         while ((currentChar = stream.read()) >= 0) {
             bytesRead++;
             Node next = current.getNeighbor(currentChar);
+            // Condition 1 - continue down 
             if (next == null) {
                 next = current.getFailureNode();
+                // look for a fail that has a path down
                 while ((next != null) && next.getNeighbor(currentChar) == null) {
                     next = next.getFailureNode();
                 }
+                
                 if (next != null) {
+                	// Condition 2 found a path down in fail path
                     next = next.getNeighbor(currentChar);
                 } else {
+                	// Condition 3 back to root
                     next = root;
                 }
             }
-            if (next == null) {
-                throw new IllegalStateException("this doesn't make sense to me yet...based on above assignment it seems it could be null yet null seems not legit");
-            }
+            // Note - next is not going to be null, conditions 1,2,3 above all set next to 
+            // 	non null. If you change above code, add the next few lines 
+            //if (next == null) {
+            //   throw new IllegalStateException("this doesn't make sense to me yet...based on above assignment it seems it could be null yet null seems not legit");
+            //}
             if (next.isMatchingNode()) {
                 addResult(resultMap, bytesRead, next.getSearchTerm());
             }
