@@ -3,9 +3,9 @@ package awesome.tony.fastfind;
 import java.util.Arrays;
 
 /**
- * This class is immutable and thread safe.  It serves as a wrapper for byte[]
+ * This class is immutable and thread safe. It serves as a wrapper for byte[]
  * search terms.
- * @author
+ *
  */
 public class SearchTerm {
 
@@ -14,35 +14,36 @@ public class SearchTerm {
 
     /**
      * Constructs a search term wrapping the given byte array
-     * @param term 
+     *
+     * @param term
      */
     public SearchTerm(final byte[] term) {
-        if(term == null || term.length == 0){
+        if (term == null || term.length == 0) {
             throw new IllegalArgumentException();
         }
         this.term = Arrays.copyOf(term, term.length);
         this.hashCode = Arrays.hashCode(this.term);
     }
-    
+
     /**
      * @return a defensive copy of the byte array of this term
      */
-    public byte[] getTerm(){
+    public byte[] getTerm() {
         return Arrays.copyOf(term, term.length);
     }
-    
+
     /**
      * @param index
      * @return integer representing the unsigned byte at the given index
      */
-    public int get(final int index){
+    public int get(final int index) {
         return (term[index] & 0xff);
     }
-    
+
     /**
      * @return size (in bytes) of the underlying byte array
      */
-    public int size(){
+    public int size() {
         return term.length;
     }
 
@@ -55,9 +56,12 @@ public class SearchTerm {
     }
 
     /**
-     * Ensures the two objects are of the same type and have the same underlying byte array contents
+     * Ensures the two objects are of the same type and have the same underlying
+     * byte array contents
+     *
      * @param obj
-     * @return true if object is same type and has the same contents; false otherwise
+     * @return true if object is same type and has the same contents; false
+     * otherwise
      */
     @Override
     public boolean equals(Object obj) {
@@ -73,13 +77,13 @@ public class SearchTerm {
         }
         return Arrays.equals(this.term, other.term);
     }
-    
+
     /**
-     * @return String representation of the underlying byte array in the platform
-     * default character set.
+     * @return String representation of the underlying byte array in the
+     * platform default character set.
      */
     @Override
-    public String toString(){
+    public String toString() {
         return new String(term);
     }
 }

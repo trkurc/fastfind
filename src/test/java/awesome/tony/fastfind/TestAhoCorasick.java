@@ -17,9 +17,9 @@ public class TestAhoCorasick {
 
     static List<SearchTerm> getSearchTerms(final List<String> terms) {
         final List<SearchTerm> searchTerms = new ArrayList<>(terms.size());
-        for (final String term : terms) {
+        terms.stream().forEach((term) -> {
             searchTerms.add(new SearchTerm(term.getBytes()));
-        }
+        });
         return searchTerms;
     }
 
