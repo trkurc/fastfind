@@ -1,4 +1,4 @@
-package awesome.tony.fastfind;
+package algorithm.search.ahocorasick;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -29,23 +29,24 @@ public class ManualTest {
     public static void main(final String args[]) throws IOException {
         final List<SearchTerm> dictionary = new ArrayList<>();
         BufferedReader reader = null;
-    	try {
-    		reader = new BufferedReader(new InputStreamReader((Thread.currentThread().getContextClassLoader().getResourceAsStream("longmatchlist.txt"))));
-    		String lineRead;
-    		while ((lineRead = reader.readLine()) != null) {
-    			if(lineRead.length() > 4)
-    				dictionary.add(new SearchTerm(lineRead.getBytes(UTF8)));
-    		}
-    	} finally {
-    		if (reader != null) {
-    			try {
-    				reader.close();
-    			} catch (final Throwable t) {
-    				//ignore
-    			}
-    		}
-    	}
-        
+        try {
+            reader = new BufferedReader(new InputStreamReader((Thread.currentThread().getContextClassLoader().getResourceAsStream("longmatchlist.txt"))));
+            String lineRead;
+            while ((lineRead = reader.readLine()) != null) {
+                if (lineRead.length() > 4) {
+                    dictionary.add(new SearchTerm(lineRead.getBytes(UTF8)));
+                }
+            }
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException t) {
+                    //ignore
+                }
+            }
+        }
+
         //build up our content to search against
         final List<String> resources = Arrays.asList("GUTINDEX.ALL", "chinese.txt", "english.txt", "russian.txt", "us.jpg");
         final Map<String, byte[]> resourceMap = new HashMap<>(resources.size());
@@ -63,7 +64,7 @@ public class ManualTest {
                 if (stream != null) {
                     try {
                         stream.close();
-                    } catch (final Throwable t) {
+                    } catch (final IOException t) {
                         //ignore
                     }
                 }
