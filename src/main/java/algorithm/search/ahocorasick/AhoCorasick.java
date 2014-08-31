@@ -1,4 +1,4 @@
-package awesome.tony.fastfind;
+package algorithm.search.ahocorasick;
 
 import java.io.IOException;
 import java.io.InputStream;

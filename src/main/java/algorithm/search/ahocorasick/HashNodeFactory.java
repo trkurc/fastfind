@@ -1,4 +1,4 @@
-package awesome.tony.fastfind;
+package algorithm.search.ahocorasick;
 
 public class HashNodeFactory implements NodeFactory {
 

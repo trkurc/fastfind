@@ -1,4 +1,4 @@
-package awesome.tony.fastfind;
+package algorithm.search.ahocorasick;
 
 /**
  * Node representing the essential element of the modified Trie used for Aho
